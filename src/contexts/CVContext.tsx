@@ -1,0 +1,49 @@
+"use client"
+
+import React, { createContext, useContext, useState } from 'react'
+import { CVData, CVStep, initialCVData } from '@/types/cv'
+
+interface CVContextType {
+  cvData: CVData
+  currentStep: CVStep
+  setCurrentStep: (step: CVStep) => void
+  setCVData: (data: CVData) => void
+  updateCVData: (data: Partial<CVData>) => void
+}
+
+const CVContext = createContext<CVContextType | undefined>(undefined)
+
+export const CVProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [cvData, setCVDataState] = useState<CVData>(initialCVData)
+  const [currentStep, setCurrentStep] = useState<CVStep>('personal')
+
+  const setCVData = (data: CVData) => {
+    setCVDataState(data)
+  }
+
+  const updateCVData = (data: Partial<CVData>) => {
+    setCVDataState((prev) => ({ ...prev, ...data }))
+  }
+
+  return (
+    <CVContext.Provider
+      value={{
+        cvData,
+        currentStep,
+        setCurrentStep,
+        setCVData,
+        updateCVData,
+      }}
+    >
+      {children}
+    </CVContext.Provider>
+  )
+}
+
+export const useCV = () => {
+  const context = useContext(CVContext)
+  if (context === undefined) {
+    throw new Error('useCV must be used within a CVProvider')
+  }
+  return context
+}
