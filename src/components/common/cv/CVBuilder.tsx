@@ -90,26 +90,61 @@ const CVBuilder: React.FC = () => {
       
       const element = previewRef.current
       
-      // Clone the element to avoid modifying the original
+      // Create a deep clone to avoid affecting the original
       const clonedElement = element.cloneNode(true) as HTMLElement
       
-      // Remove all class attributes to avoid Tailwind CSS
-      const removeClasses = (el: HTMLElement) => {
-        el.removeAttribute('class')
-        Array.from(el.children).forEach(child => removeClasses(child as HTMLElement))
+      // Aggressively clean up problematic elements and styles
+      const cleanElement = (el: HTMLElement) => {
+        // Remove all SVG elements
+        const svgs = el.querySelectorAll('svg, SVG')
+        svgs.forEach(svg => svg.remove())
+        
+        // Process all elements
+        const allElements = el.querySelectorAll('*')
+        allElements.forEach(elem => {
+          if (elem instanceof HTMLElement) {
+            // Get computed style to check for lab colors
+            const computedStyle = window.getComputedStyle(elem)
+            
+            // Remove problematic inline styles
+            const inlineStyle = elem.getAttribute('style')
+            if (inlineStyle) {
+              if (inlineStyle.includes('lab(') || 
+                  inlineStyle.includes('lch(') || 
+                  inlineStyle.includes('oklab(') ||
+                  inlineStyle.includes('oklch(')) {
+                elem.removeAttribute('style')
+              }
+            }
+            
+            // Force safe colors if needed
+            if (computedStyle.backgroundColor.includes('lab')) {
+              elem.style.backgroundColor = '#ffffff'
+            }
+            if (computedStyle.color.includes('lab')) {
+              elem.style.color = '#000000'
+            }
+          }
+        })
       }
-      removeClasses(clonedElement)
+      
+      cleanElement(clonedElement)
       
       const opt = {
-        margin: 0,
-        filename: `cv_${cvData.personalInfo.fullName || 'resume'}.pdf`,
+        margin: [10, 10, 10, 10] as [number, number, number, number],
+        filename: `${cvData.personalInfo.fullName || 'resume'}_CV.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
           logging: false,
+          letterRendering: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          removeContainer: true, // Remove container after rendering
           ignoreElements: (element: any) => {
-            return element.tagName === 'STYLE' || element.tagName === 'LINK'
+            const tagName = element.tagName?.toLowerCase()
+            return tagName === 'svg' || tagName === 'style' || tagName === 'link'
           }
         },
         jsPDF: {
@@ -120,7 +155,10 @@ const CVBuilder: React.FC = () => {
       }
 
       console.log('Generating PDF...')
-      await html2pdf().set(opt).from(clonedElement).save()
+      
+      // Create a fresh instance each time
+      const worker = html2pdf()
+      await worker.set(opt).from(clonedElement).save()
 
       toast.success('Your CV has been downloaded!')
     } catch (error: any) {
