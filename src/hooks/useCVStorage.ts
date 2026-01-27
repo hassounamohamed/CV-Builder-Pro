@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { collection, doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { db, isConfigured } from '@/lib/firebase'
 import { CVData } from '@/types/cv'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
@@ -12,6 +12,11 @@ export const useCVStorage = () => {
   const saveCV = async (cvData: CVData): Promise<CVData | null> => {
     if (!user) {
       toast.error('Please sign in to save your CV.')
+      return null
+    }
+
+    if (!isConfigured || !db) {
+      toast.error('Database is not configured.')
       return null
     }
 
@@ -44,6 +49,11 @@ export const useCVStorage = () => {
 
   const loadCV = async (): Promise<CVData | null> => {
     if (!user) return null
+
+    if (!isConfigured || !db) {
+      console.warn('Database is not configured')
+      return null
+    }
 
     setIsLoading(true)
     try {

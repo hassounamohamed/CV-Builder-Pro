@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth, isConfigured } from '@/lib/firebase'
 
 interface User {
   id: string
@@ -54,6 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Skip Firebase initialization if not configured (e.g., during build)
+    if (!isConfigured || !auth) {
+      setIsLoading(false)
+      return
+    }
+
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
@@ -71,6 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    if (!isConfigured || !auth) {
+      return { error: new Error('Firebase is not configured. Please add environment variables.') }
+    }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       setUser({
@@ -86,6 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string) => {
+    if (!isConfigured || !auth) {
+      return { error: new Error('Firebase is not configured. Please add environment variables.') }
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       setUser({
@@ -101,6 +113,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signOut = async () => {
+    if (!isConfigured || !auth) {
+      console.warn('Firebase is not configured')
+      return
+    }
     try {
       await firebaseSignOut(auth)
       setUser(null)
