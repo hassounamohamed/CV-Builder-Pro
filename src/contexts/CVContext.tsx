@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { CVData, CVStep, initialCVData } from '@/types/cv'
 
 interface CVContextType {
@@ -17,24 +17,27 @@ export const CVProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [cvData, setCVDataState] = useState<CVData>(initialCVData)
   const [currentStep, setCurrentStep] = useState<CVStep>('personal')
 
-  const setCVData = (data: CVData) => {
+  const setCVData = useCallback((data: CVData) => {
     setCVDataState(data)
-  }
+  }, [])
 
-  const updateCVData = (data: Partial<CVData>) => {
+  const updateCVData = useCallback((data: Partial<CVData>) => {
     setCVDataState((prev) => ({ ...prev, ...data }))
-  }
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      cvData,
+      currentStep,
+      setCurrentStep,
+      setCVData,
+      updateCVData,
+    }),
+    [cvData, currentStep, setCVData, updateCVData]
+  )
 
   return (
-    <CVContext.Provider
-      value={{
-        cvData,
-        currentStep,
-        setCurrentStep,
-        setCVData,
-        updateCVData,
-      }}
-    >
+    <CVContext.Provider value={value}>
       {children}
     </CVContext.Provider>
   )

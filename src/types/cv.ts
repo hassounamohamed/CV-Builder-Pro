@@ -4,6 +4,7 @@ export type CVStep = 'personal' | 'summary' | 'experience' | 'education' | 'skil
 
 export interface PersonalInfo {
   fullName: string
+  professionalTitle?: string
   email: string
   phone: string
   address: string
@@ -43,6 +44,19 @@ export interface Language {
   name: string
 }
 
+export interface Certification {
+  id: string
+  name: string
+  issuer?: string
+  date?: string
+}
+
+export interface Award {
+  id: string
+  name: string
+  description?: string
+}
+
 export interface CVData {
   id?: string
   userId?: string
@@ -52,6 +66,8 @@ export interface CVData {
   education: Education[]
   skills: Skill[]
   languages: Language[]
+  certifications?: Certification[]
+  awards?: Award[]
   createdAt?: Date | any // Allow Firestore FieldValue
   updatedAt?: Date | any // Allow Firestore FieldValue
 }
@@ -74,6 +90,7 @@ export const cvSteps: StepConfig[] = [
 export const initialCVData: CVData = {
   personalInfo: {
     fullName: '',
+    professionalTitle: '',
     email: '',
     phone: '',
     address: '',
@@ -85,4 +102,6 @@ export const initialCVData: CVData = {
   education: [],
   skills: [],
   languages: [],
+  certifications: [],
+  awards: [],
 }

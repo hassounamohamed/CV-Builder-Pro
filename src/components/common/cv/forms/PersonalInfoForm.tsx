@@ -5,9 +5,11 @@ import { useCV } from '@/contexts/CVContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useI18n } from '@/contexts/I18nContext'
 
 const PersonalInfoForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
+  const { t } = useI18n()
 
   const handleChange = (field: string, value: string) => {
     updateCVData({
@@ -21,14 +23,14 @@ const PersonalInfoForm: React.FC = () => {
   return (
     <Card className="animate-fadeIn">
       <CardHeader>
-        <CardTitle>Personal Information</CardTitle>
+        <CardTitle>{t('cv.personal.title')}</CardTitle>
         <CardDescription>
-          Enter your basic contact information and professional details
+          {t('cv.personal.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name *</Label>
+          <Label htmlFor="fullName">{t('cv.personal.fullName')}</Label>
           <Input
             id="fullName"
             placeholder="John Doe"
@@ -39,7 +41,17 @@ const PersonalInfoForm: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="professionalTitle">Professional Title</Label>
+          <Input
+            id="professionalTitle"
+            placeholder="Senior Software Engineer"
+            value={cvData.personalInfo.professionalTitle || ''}
+            onChange={(e) => handleChange('professionalTitle', e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">{t('common.email')} *</Label>
           <Input
             id="email"
             type="email"
@@ -51,7 +63,7 @@ const PersonalInfoForm: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone *</Label>
+          <Label htmlFor="phone">{t('cv.personal.phone')}</Label>
           <Input
             id="phone"
             type="tel"
@@ -63,7 +75,7 @@ const PersonalInfoForm: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address">Address *</Label>
+          <Label htmlFor="address">{t('cv.personal.address')}</Label>
           <Input
             id="address"
             placeholder="123 Main St, City, Country"
@@ -74,7 +86,7 @@ const PersonalInfoForm: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="linkedin">LinkedIn (Optional)</Label>
+          <Label htmlFor="linkedin">{t('cv.personal.linkedin')}</Label>
           <Input
             id="linkedin"
             placeholder="linkedin.com/in/johndoe"
@@ -84,7 +96,7 @@ const PersonalInfoForm: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website">Website (Optional)</Label>
+          <Label htmlFor="website">{t('cv.personal.website')}</Label>
           <Input
             id="website"
             placeholder="www.johndoe.com"

@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Trash2 } from 'lucide-react'
 import { Education } from '@/types/cv'
+import { useI18n } from '@/contexts/I18nContext'
 
 const EducationForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
+  const { t } = useI18n()
   const [currentEdu, setCurrentEdu] = useState<Partial<Education>>({
     id: '',
     institution: '',
@@ -32,7 +34,7 @@ const EducationForm: React.FC = () => {
         degree: currentEdu.degree,
         field: currentEdu.field,
         startDate: currentEdu.startDate,
-        endDate: currentEdu.current ? 'Present' : currentEdu.endDate || '',
+        endDate: currentEdu.endDate || '',
         current: currentEdu.current || false,
         description: currentEdu.description,
       }
@@ -63,8 +65,8 @@ const EducationForm: React.FC = () => {
   return (
     <Card className="animate-fadeIn">
       <CardHeader>
-        <CardTitle>Education</CardTitle>
-        <CardDescription>Add your educational background</CardDescription>
+        <CardTitle>{t('cv.education.title')}</CardTitle>
+        <CardDescription>{t('cv.education.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Added Education */}
@@ -76,10 +78,10 @@ const EducationForm: React.FC = () => {
                 className="p-4 border rounded-lg bg-muted/50 flex justify-between items-start"
               >
                 <div className="flex-1">
-                  <h4 className="font-semibold">{edu.degree} in {edu.field}</h4>
+                  <h4 className="font-semibold">{edu.degree} {t('cv.education.in')} {edu.field}</h4>
                   <p className="text-sm text-muted-foreground">{edu.institution}</p>
                   <p className="text-xs text-muted-foreground">
-                    {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
+                    {edu.startDate} - {edu.current ? t('common.present') : edu.endDate}
                   </p>
                 </div>
                 <Button
@@ -97,13 +99,13 @@ const EducationForm: React.FC = () => {
 
         {/* Add New Education Form */}
         <div className="space-y-4 pt-4 border-t">
-          <h4 className="font-medium">Add New Education</h4>
+          <h4 className="font-medium">{t('cv.education.addTitle')}</h4>
 
           <div className="space-y-2">
-            <Label htmlFor="institution">Institution</Label>
+            <Label htmlFor="institution">{t('cv.education.institution')}</Label>
             <Input
               id="institution"
-              placeholder="University Name"
+              placeholder={t('cv.education.institutionPlaceholder')}
               value={currentEdu.institution || ''}
               onChange={(e) => setCurrentEdu({ ...currentEdu, institution: e.target.value })}
             />
@@ -111,20 +113,20 @@ const EducationForm: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="degree">Degree</Label>
+              <Label htmlFor="degree">{t('cv.education.degree')}</Label>
               <Input
                 id="degree"
-                placeholder="Bachelor's, Master's, PhD..."
+                placeholder={t('cv.education.degreePlaceholder')}
                 value={currentEdu.degree || ''}
                 onChange={(e) => setCurrentEdu({ ...currentEdu, degree: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="field">Field of Study</Label>
+              <Label htmlFor="field">{t('cv.education.field')}</Label>
               <Input
                 id="field"
-                placeholder="Computer Science, Business..."
+                placeholder={t('cv.education.fieldPlaceholder')}
                 value={currentEdu.field || ''}
                 onChange={(e) => setCurrentEdu({ ...currentEdu, field: e.target.value })}
               />
@@ -133,7 +135,7 @@ const EducationForm: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="eduStartDate">Start Date</Label>
+              <Label htmlFor="eduStartDate">{t('cv.education.startDate')}</Label>
               <Input
                 id="eduStartDate"
                 type="month"
@@ -143,7 +145,7 @@ const EducationForm: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="eduEndDate">End Date</Label>
+              <Label htmlFor="eduEndDate">{t('cv.education.endDate')}</Label>
               <Input
                 id="eduEndDate"
                 type="month"
@@ -163,15 +165,15 @@ const EducationForm: React.FC = () => {
               }
             />
             <label htmlFor="eduCurrent" className="text-sm">
-              I currently study here
+              {t('cv.education.currentStudy')}
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="eduDescription">Description (Optional)</Label>
+            <Label htmlFor="eduDescription">{t('cv.education.descriptionLabel')}</Label>
             <Textarea
               id="eduDescription"
-              placeholder="Relevant coursework, achievements, GPA..."
+              placeholder={t('cv.education.descriptionPlaceholder')}
               value={currentEdu.description || ''}
               onChange={(e) => setCurrentEdu({ ...currentEdu, description: e.target.value })}
               className="min-h-[80px]"
@@ -180,7 +182,7 @@ const EducationForm: React.FC = () => {
 
           <Button onClick={handleAdd} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
-            Add Education
+            {t('cv.education.addButton')}
           </Button>
         </div>
       </CardContent>

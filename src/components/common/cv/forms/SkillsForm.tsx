@@ -8,9 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2 } from 'lucide-react'
 import { Skill } from '@/types/cv'
+import { useI18n } from '@/contexts/I18nContext'
 
 const SkillsForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
+  const { t } = useI18n()
   const [currentSkill, setCurrentSkill] = useState<Partial<Skill>>({
     id: '',
     name: '',
@@ -43,8 +45,8 @@ const SkillsForm: React.FC = () => {
   return (
     <Card className="animate-fadeIn">
       <CardHeader>
-        <CardTitle>Skills</CardTitle>
-        <CardDescription>Add your technical and soft skills</CardDescription>
+        <CardTitle>{t('cv.skills.title')}</CardTitle>
+        <CardDescription>{t('cv.skills.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Added Skills */}
@@ -69,13 +71,13 @@ const SkillsForm: React.FC = () => {
 
         {/* Add New Skill Form */}
         <div className="space-y-4 pt-4 border-t">
-          <h4 className="font-medium">Add New Skill</h4>
+          <h4 className="font-medium">{t('cv.skills.addTitle')}</h4>
 
           <div className="space-y-2">
-            <Label htmlFor="skillName">Skill Name</Label>
+            <Label htmlFor="skillName">{t('cv.skills.name')}</Label>
             <Input
               id="skillName"
-              placeholder="e.g., JavaScript, Leadership..."
+              placeholder={t('cv.skills.placeholder')}
               value={currentSkill.name || ''}
               onChange={(e) => setCurrentSkill({ ...currentSkill, name: e.target.value })}
               onKeyPress={(e) => {
@@ -88,7 +90,7 @@ const SkillsForm: React.FC = () => {
 
           <Button onClick={handleAdd} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
-            Add Skill
+            {t('cv.skills.addButton')}
           </Button>
         </div>
       </CardContent>

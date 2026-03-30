@@ -241,6 +241,14 @@
   background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
 }
 
+.dark .gradient-bg-main {
+  background: linear-gradient(135deg, #0b1220 0%, #111827 50%, #1f2937 100%);
+}
+
+.dark .gradient-bg-auth {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%);
+}
+
 /* Glass Effect */
 .glass-effect {
   background: rgba(255, 255, 255, 0.9);

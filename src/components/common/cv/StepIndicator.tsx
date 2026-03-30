@@ -4,6 +4,7 @@ import React from 'react'
 import { CVStep, cvSteps } from '@/types/cv'
 import { User, FileText, Briefcase, GraduationCap, Award, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/contexts/I18nContext'
 
 interface StepIndicatorProps {
   currentStep: CVStep
@@ -24,6 +25,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   onStepClick,
   completedSteps,
 }) => {
+  const { t } = useI18n()
+
   const getIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName as keyof typeof iconMap]
     return IconComponent || FileText
@@ -69,7 +72,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                       : 'text-muted-foreground'
                   )}
                 >
-                  {step.label}
+                  {t(`cv.steps.${step.id}`)}
                 </span>
               </button>
 

@@ -1,28 +1,32 @@
+"use client"
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { useI18n } from '@/contexts/I18nContext'
 
 export default function HeroSection() {
+  const { t } = useI18n()
+
   return (
     <section className="relative z-10 container mx-auto px-4 py-20 text-center">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg border border-indigo-100 mb-4 animate-bounce">
           <Sparkles className="w-4 h-4 text-indigo-600" />
-          <span className="text-sm font-medium text-indigo-900">AI-Powered Resume Builder</span>
+          <span className="text-sm font-medium text-indigo-900">{t('landing.badge')}</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold leading-tight">
           <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Create Professional
+            {t('landing.heroTitleA')}
           </span>
           <br />
-          <span className="text-slate-900">Resumes in Minutes</span>
+          <span className="text-slate-900">{t('landing.heroTitleB')}</span>
         </h1>
 
         <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          Build stunning, ATS-friendly resumes with our intuitive drag-and-drop builder. 
-          Stand out from the crowd and land your dream job.
+          {t('landing.heroSubtitle')}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
@@ -32,7 +36,7 @@ export default function HeroSection() {
             asChild
           >
             <Link href="/auth" className="flex items-center gap-2">
-              Start Building Free
+              {t('landing.startFree')}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>
@@ -41,22 +45,22 @@ export default function HeroSection() {
             variant="outline" 
             className="px-8 py-6 text-lg border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
           >
-            Watch Demo
+            {t('landing.watchDemo')}
           </Button>
         </div>
 
         <div className="flex items-center justify-center gap-8 pt-8 text-sm text-slate-600">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>No Credit Card Required</span>
+            <span>{t('landing.noCard')}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>Free Templates</span>
+            <span>{t('landing.freeTemplates')}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>Export to PDF</span>
+            <span>{t('landing.exportPdf')}</span>
           </div>
         </div>
       </div>

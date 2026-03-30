@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { collection, doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { useCallback, useState } from 'react'
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db, isConfigured } from '@/lib/firebase'
 import { CVData } from '@/types/cv'
 import { useAuth } from '@/contexts/AuthContext'
@@ -9,7 +9,7 @@ export const useCVStorage = () => {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
-  const saveCV = async (cvData: CVData): Promise<CVData | null> => {
+  const saveCV = useCallback(async (cvData: CVData): Promise<CVData | null> => {
     if (!user) {
       toast.error('Please sign in to save your CV.')
       return null
@@ -45,9 +45,9 @@ export const useCVStorage = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user])
 
-  const loadCV = async (): Promise<CVData | null> => {
+  const loadCV = useCallback(async (): Promise<CVData | null> => {
     if (!user) return null
 
     if (!isConfigured || !db) {
@@ -62,9 +62,15 @@ export const useCVStorage = () => {
 
       if (cvSnap.exists()) {
         const data = cvSnap.data() as CVData
-        // Ensure languages field exists for backwards compatibility
+        // Ensure new fields exist for backwards compatibility
         if (!data.languages) {
           data.languages = []
+        }
+        if (!data.certifications) {
+          data.certifications = []
+        }
+        if (!data.awards) {
+          data.awards = []
         }
         return data
       }
@@ -76,7 +82,41 @@ export const useCVStorage = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user])
 
-  return { saveCV, loadCV, isLoading }
+  const createShareLink = useCallback(async (cvData: CVData): Promise<string | null> => {
+    if (!user) {
+      return null
+    }
+
+    if (!isConfigured || !db) {
+      return null
+    }
+
+    try {
+      const cvRef = doc(db, 'cvs', user.id)
+      await setDoc(
+        cvRef,
+        {
+          ...cvData,
+          userId: user.id,
+          isShared: true,
+          sharedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      )
+
+      if (typeof window === 'undefined') {
+        return null
+      }
+
+      return `${window.location.origin}/cv-share/${user.id}`
+    } catch (error) {
+      console.error('Error creating share link:', error)
+      return null
+    }
+  }, [user])
+
+  return { saveCV, loadCV, createShareLink, isLoading }
 }

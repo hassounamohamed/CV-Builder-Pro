@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Trash2 } from 'lucide-react'
 import { Experience } from '@/types/cv'
+import { useI18n } from '@/contexts/I18nContext'
 
 const ExperienceForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
+  const { t } = useI18n()
   const [currentExp, setCurrentExp] = useState<Partial<Experience>>({
     id: '',
     company: '',
@@ -30,7 +32,7 @@ const ExperienceForm: React.FC = () => {
         company: currentExp.company,
         position: currentExp.position,
         startDate: currentExp.startDate,
-        endDate: currentExp.current ? 'Present' : currentExp.endDate || '',
+        endDate: currentExp.endDate || '',
         current: currentExp.current || false,
         description: currentExp.description || '',
       }
@@ -60,8 +62,8 @@ const ExperienceForm: React.FC = () => {
   return (
     <Card className="animate-fadeIn">
       <CardHeader>
-        <CardTitle>Work Experience</CardTitle>
-        <CardDescription>Add your professional work experience</CardDescription>
+        <CardTitle>{t('cv.experience.title')}</CardTitle>
+        <CardDescription>{t('cv.experience.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Added Experiences */}
@@ -76,7 +78,7 @@ const ExperienceForm: React.FC = () => {
                   <h4 className="font-semibold">{exp.position}</h4>
                   <p className="text-sm text-muted-foreground">{exp.company}</p>
                   <p className="text-xs text-muted-foreground">
-                    {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
+                    {exp.startDate} - {exp.current ? t('common.present') : exp.endDate}
                   </p>
                 </div>
                 <Button
@@ -94,24 +96,24 @@ const ExperienceForm: React.FC = () => {
 
         {/* Add New Experience Form */}
         <div className="space-y-4 pt-4 border-t">
-          <h4 className="font-medium">Add New Experience</h4>
+          <h4 className="font-medium">{t('cv.experience.addTitle')}</h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="company">{t('cv.experience.company')}</Label>
               <Input
                 id="company"
-                placeholder="Company Name"
+                placeholder={t('cv.experience.companyPlaceholder')}
                 value={currentExp.company || ''}
                 onChange={(e) => setCurrentExp({ ...currentExp, company: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Position</Label>
+              <Label htmlFor="position">{t('cv.experience.position')}</Label>
               <Input
                 id="position"
-                placeholder="Job Title"
+                placeholder={t('cv.experience.positionPlaceholder')}
                 value={currentExp.position || ''}
                 onChange={(e) => setCurrentExp({ ...currentExp, position: e.target.value })}
               />
@@ -120,7 +122,7 @@ const ExperienceForm: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">{t('cv.experience.startDate')}</Label>
               <Input
                 id="startDate"
                 type="month"
@@ -130,7 +132,7 @@ const ExperienceForm: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
+              <Label htmlFor="endDate">{t('cv.experience.endDate')}</Label>
               <Input
                 id="endDate"
                 type="month"
@@ -150,15 +152,15 @@ const ExperienceForm: React.FC = () => {
               }
             />
             <label htmlFor="current" className="text-sm">
-              I currently work here
+              {t('cv.experience.currentWork')}
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('cv.experience.descriptionLabel')}</Label>
             <Textarea
               id="description"
-              placeholder="Describe your responsibilities and achievements..."
+              placeholder={t('cv.experience.descriptionPlaceholder')}
               value={currentExp.description || ''}
               onChange={(e) => setCurrentExp({ ...currentExp, description: e.target.value })}
               className="min-h-[100px]"
@@ -167,7 +169,7 @@ const ExperienceForm: React.FC = () => {
 
           <Button onClick={handleAdd} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
-            Add Experience
+            {t('cv.experience.addButton')}
           </Button>
         </div>
       </CardContent>

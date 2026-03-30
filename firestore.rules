@@ -1,4 +1,4 @@
-# Firebase Firestore Security Rules
+// Firebase Firestore Security Rules
 
 rules_version = '2';
 service cloud.firestore {
@@ -15,8 +15,8 @@ service cloud.firestore {
     
     // CVs collection
     match /cvs/{cvId} {
-      // Allow read if user is authenticated and owns the CV
-      allow read: if isOwner(cvId);
+      // Owner can always read, public can read only explicitly shared CVs
+      allow read: if isOwner(cvId) || resource.data.isShared == true;
       
       // Allow create if user is authenticated and creating their own CV
       allow create: if isAuthenticated() && request.auth.uid == cvId;

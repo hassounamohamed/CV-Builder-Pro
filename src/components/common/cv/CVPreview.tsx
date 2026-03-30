@@ -2,34 +2,49 @@
 
 import React, { forwardRef } from 'react'
 import { CVData } from '@/types/cv'
+import { useI18n } from '@/contexts/I18nContext'
 
 interface CVPreviewProps {
   cvData: CVData
 }
 
 const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) => {
+  const { t, locale, dir } = useI18n()
+
   const formatDate = (date: string) => {
-    if (date === 'Present') return 'Present'
     if (!date) return ''
     const [year, month] = date.split('-')
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    return `${months[parseInt(month) - 1]} ${year}`
+    const parsedYear = Number(year)
+    const parsedMonth = Number(month)
+
+    if (!Number.isFinite(parsedYear) || !Number.isFinite(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      return date
+    }
+
+    const dateObject = new Date(parsedYear, parsedMonth - 1, 1)
+    return new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(dateObject)
   }
 
-  const getSkillLevelWidth = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return '25%'
-      case 'intermediate':
-        return '50%'
-      case 'advanced':
-        return '75%'
-      case 'expert':
-        return '100%'
-      default:
-        return '50%'
-    }
-  }
+  const toBullets = (text: string) =>
+    text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+
+  const contactLine = [
+    cvData.personalInfo.email,
+    cvData.personalInfo.phone,
+    cvData.personalInfo.address,
+    cvData.personalInfo.linkedin,
+    cvData.personalInfo.website,
+  ]
+    .filter(Boolean)
+    .join(' | ')
+
+  const hasAdditionalInfo =
+    cvData.languages.length > 0 ||
+    (cvData.certifications && cvData.certifications.length > 0) ||
+    (cvData.awards && cvData.awards.length > 0)
 
   return (
     <div
@@ -44,103 +59,59 @@ const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) =
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         margin: '0 auto',
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        direction: dir
       }}
     >
-      {/* Header */}
-      <div style={{ paddingBottom: '1rem', marginBottom: '1.5rem', borderBottom: '3px solid #000000' }}>
-        <h1 style={{ color: '#000000', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', margin: '0 0 1rem 0' }}>
-          {cvData.personalInfo.fullName || 'Your Name'}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ color: '#000000', fontSize: '2rem', fontWeight: '700', margin: '0 0 0.35rem 0', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+          {cvData.personalInfo.fullName || t('cv.preview.yourName')}
         </h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', fontSize: '0.9rem', color: '#374151', lineHeight: '1.5' }}>
-          {cvData.personalInfo.email && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>✉</span>
-              <span>{cvData.personalInfo.email}</span>
-            </div>
-          )}
-          {cvData.personalInfo.phone && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>☎</span>
-              <span>{cvData.personalInfo.phone}</span>
-            </div>
-          )}
-          {cvData.personalInfo.address && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>📍</span>
-              <span>{cvData.personalInfo.address}</span>
-            </div>
-          )}
-          {cvData.personalInfo.linkedin && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '0.75rem', backgroundColor: '#0077b5', color: '#ffffff', padding: '2px 5px', borderRadius: '2px', fontFamily: 'sans-serif' }}>in</span>
-              <span>{cvData.personalInfo.linkedin}</span>
-            </div>
-          )}
-          {cvData.personalInfo.website && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>🌐</span>
-              <span>{cvData.personalInfo.website}</span>
-            </div>
-          )}
-        </div>
+        {cvData.personalInfo.professionalTitle && (
+          <p style={{ color: '#111111', fontSize: '1.1rem', fontWeight: '500', margin: '0 0 0.45rem 0', textTransform: 'uppercase' }}>
+            {cvData.personalInfo.professionalTitle}
+          </p>
+        )}
+        {contactLine && (
+          <div style={{ fontSize: '0.9rem', color: '#111111', lineHeight: '1.4', marginBottom: '0.5rem' }}>
+            {contactLine}
+          </div>
+        )}
       </div>
 
-      {/* Professional Summary */}
       {cvData.summary && (
-        <div style={{ marginBottom: '1.5rem', pageBreakInside: 'avoid' }}>
-          <h2 style={{ color: '#000000', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>
-            Professional Summary
+        <div style={{ marginBottom: '1rem', pageBreakInside: 'avoid' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            {t('cv.preview.professionalSummary')}
           </h2>
-          <p style={{ color: '#374151', lineHeight: '1.7', fontSize: '0.95rem', margin: '0', wordWrap: 'break-word', whiteSpace: 'normal' }}>{cvData.summary}</p>
+          <p style={{ color: '#111111', lineHeight: '1.45', fontSize: '0.96rem', margin: '0' }}>{cvData.summary}</p>
         </div>
       )}
 
-      {/* Experience */}
       {cvData.experience.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ color: '#000000', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>
-            Work Experience
+        <div style={{ marginBottom: '1rem' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            {t('cv.preview.workExperience')}
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
             {cvData.experience.map((exp) => (
-              <div key={exp.id} style={{ paddingLeft: '1rem', borderLeft: '3px solid #6b7280', paddingBottom: '0.5rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem', gap: '1rem' }}>
-                  <h3 style={{ color: '#000000', fontSize: '1.1rem', fontWeight: 'bold', margin: '0' }}>{exp.position}</h3>
-                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
-                  </span>
-                </div>
-                <p style={{ color: '#374151', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>{exp.company}</p>
-                <p style={{ color: '#4b5563', lineHeight: '1.7', whiteSpace: 'pre-wrap', fontSize: '0.9rem', margin: '0', wordWrap: 'break-word' }}>
-                  {exp.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Education */}
-      {cvData.education.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ color: '#000000', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>
-            Education
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {cvData.education.map((edu) => (
-              <div key={edu.id} style={{ paddingLeft: '1rem', borderLeft: '3px solid #6b7280', paddingBottom: '0.5rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem', gap: '1rem' }}>
-                  <h3 style={{ color: '#000000', fontSize: '1.1rem', fontWeight: 'bold', margin: '0' }}>
-                    {edu.degree} in {edu.field}
+              <div key={exp.id} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem', gap: '0.8rem' }}>
+                  <h3 style={{ color: '#000000', fontSize: '1rem', fontWeight: '700', margin: '0' }}>
+                    {exp.position}{exp.company ? `, ${exp.company}` : ''}
                   </h3>
-                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                  <span style={{ color: '#333333', fontSize: '0.9rem', whiteSpace: 'nowrap', flexShrink: 0, fontStyle: 'italic' }}>
+                    {formatDate(exp.startDate)} - {exp.current ? t('common.present') : formatDate(exp.endDate)}
                   </span>
                 </div>
-                <p style={{ color: '#374151', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>{edu.institution}</p>
-                {edu.description && (
-                  <p style={{ color: '#4b5563', lineHeight: '1.7', fontSize: '0.9rem', margin: '0', wordWrap: 'break-word', whiteSpace: 'normal' }}>{edu.description}</p>
+                {toBullets(exp.description).length > 0 && (
+                  <ul style={{ margin: '0.2rem 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.94rem', lineHeight: '1.35' }}>
+                    {toBullets(exp.description).map((line, idx) => (
+                      <li key={`${exp.id}-${idx}`} style={{ marginBottom: '0.12rem' }}>
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             ))}
@@ -148,60 +119,75 @@ const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) =
         </div>
       )}
 
-      {/* Skills */}
-      {cvData.skills.length > 0 && (
-        <div style={{ marginBottom: '1.5rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-          <h2 style={{ color: '#000000', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>
-            Skills
+      {cvData.education.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            {t('cv.preview.education')}
           </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-            {cvData.skills.map((skill) => (
-              <span
-                key={skill.id}
-                style={{
-                  padding: '0.4rem 0.9rem',
-              
-          
-            
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  display: 'inline-block',
-                  pageBreakInside: 'avoid',
-                  breakInside: 'avoid'
-                }}
-              >
-                {skill.name}
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            {cvData.education.map((edu) => (
+              <div key={edu.id} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem', gap: '0.8rem' }}>
+                  <h3 style={{ color: '#000000', fontSize: '1rem', fontWeight: '700', margin: '0' }}>
+                    {edu.degree}{edu.field ? ` ${t('cv.education.in')} ${edu.field}` : ''}
+                  </h3>
+                  <span style={{ color: '#333333', fontSize: '0.9rem', whiteSpace: 'nowrap', flexShrink: 0, fontStyle: 'italic' }}>
+                    {formatDate(edu.startDate)} - {edu.current ? t('common.present') : formatDate(edu.endDate)}
+                  </span>
+                </div>
+                <p style={{ color: '#111111', fontSize: '0.95rem', margin: '0 0 0.2rem 0' }}>{edu.institution}</p>
+                {edu.description && (
+                  <ul style={{ margin: '0.1rem 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.92rem', lineHeight: '1.35' }}>
+                    {toBullets(edu.description).map((line, idx) => (
+                      <li key={`${edu.id}-${idx}`}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Languages */}
-      {cvData.languages.length > 0 && (
-        <div style={{ marginBottom: '1.5rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-          <h2 style={{ color: '#000000', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0' }}>
-            Languages
+      {cvData.skills.length > 0 && (
+        <div style={{ marginBottom: '1rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            {t('cv.preview.skills')}
           </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-            {cvData.languages.map((language) => (
-              <span
-                key={language.id}
-                style={{
-                  padding: '0.4rem 0.9rem',
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#111111', lineHeight: '1.35' }}>
+            {cvData.skills.map((skill) => skill.name).join(', ')}
+          </p>
+        </div>
+      )}
 
-                 
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  display: 'inline-block',
-                  pageBreakInside: 'avoid',
-                  breakInside: 'avoid'
-                }}
-              >
-                {language.name}
-              </span>
-            ))}
-          </div>
+      {hasAdditionalInfo && (
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            Additional Information
+          </h2>
+          <ul style={{ margin: '0 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.94rem', lineHeight: '1.35' }}>
+            {cvData.languages.length > 0 && (
+              <li>
+                <strong>{t('cv.preview.languages')}:</strong> {cvData.languages.map((language) => language.name).join(', ')}
+              </li>
+            )}
+            {cvData.certifications && cvData.certifications.length > 0 && (
+              <li>
+                <strong>Certifications:</strong>{' '}
+                {cvData.certifications
+                  .map((cert) => [cert.name, cert.issuer, cert.date].filter(Boolean).join(' - '))
+                  .join(', ')}
+              </li>
+            )}
+            {cvData.awards && cvData.awards.length > 0 && (
+              <li>
+                <strong>Awards/Activities:</strong>{' '}
+                {cvData.awards
+                  .map((award) => [award.name, award.description].filter(Boolean).join(' - '))
+                  .join(', ')}
+              </li>
+            )}
+          </ul>
         </div>
       )}
     </div>

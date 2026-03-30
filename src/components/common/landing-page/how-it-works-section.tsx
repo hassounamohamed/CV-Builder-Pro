@@ -1,30 +1,36 @@
+"use client"
+
+import { useI18n } from '@/contexts/I18nContext'
+
 const steps = [
   {
     step: '01',
-    title: 'Choose a Template',
-    description: 'Pick from our collection of professional, ATS-friendly templates designed by experts.',
+    titleKey: 'landing.steps.chooseTitle',
+    descriptionKey: 'landing.steps.chooseDesc',
   },
   {
     step: '02',
-    title: 'Fill Your Details',
-    description: 'Use our intuitive editor to add your information. Get AI suggestions for better content.',
+    titleKey: 'landing.steps.fillTitle',
+    descriptionKey: 'landing.steps.fillDesc',
   },
   {
     step: '03',
-    title: 'Download & Apply',
-    description: 'Export your resume in multiple formats and start applying to your dream jobs.',
+    titleKey: 'landing.steps.downloadTitle',
+    descriptionKey: 'landing.steps.downloadDesc',
   },
 ]
 
 export default function HowItWorksSection() {
+  const { t } = useI18n()
+
   return (
     <section className="relative z-10 container mx-auto px-4 py-20">
       <div className="text-center mb-16">
         <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-          How It Works
+          {t('landing.howTitle')}
         </h2>
         <p className="text-xl text-slate-600">
-          Three simple steps to your perfect resume
+          {t('landing.howSubtitle')}
         </p>
       </div>
 
@@ -38,10 +44,10 @@ export default function HowItWorksSection() {
               </div>
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
-              {step.title}
+              {t(step.titleKey)}
             </h3>
             <p className="text-slate-600 leading-relaxed">
-              {step.description}
+              {t(step.descriptionKey)}
             </p>
           </div>
         ))}
