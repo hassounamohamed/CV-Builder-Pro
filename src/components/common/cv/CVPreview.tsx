@@ -165,14 +165,14 @@ const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) =
           <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
             Additional Information
           </h2>
-          <ul style={{ margin: '0 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.94rem', lineHeight: '1.35' }}>
+          <ul style={{ margin: '0 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.94rem', lineHeight: '1.5', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
             {cvData.languages.length > 0 && (
-              <li>
+              <li style={{ marginBottom: '0.35rem' }}>
                 <strong>{t('cv.preview.languages')}:</strong> {cvData.languages.map((language) => language.name).join(', ')}
               </li>
             )}
             {cvData.certifications && cvData.certifications.length > 0 && (
-              <li>
+              <li style={{ marginBottom: '0.35rem' }}>
                 <strong>Certifications:</strong>{' '}
                 {cvData.certifications
                   .map((cert) => [cert.name, cert.issuer, cert.date].filter(Boolean).join(' - '))
@@ -180,7 +180,7 @@ const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) =
               </li>
             )}
             {cvData.awards && cvData.awards.length > 0 && (
-              <li>
+              <li style={{ marginBottom: '0.35rem' }}>
                 <strong>Awards/Activities:</strong>{' '}
                 {cvData.awards
                   .map((award) => [award.name, award.description].filter(Boolean).join(' - '))

@@ -99,83 +99,143 @@ const CVBuilder: React.FC = () => {
     setIsDownloading(true)
 
     try {
-      // Dynamic import to avoid SSR issues
-      const html2pdfModule = await import('html2pdf.js')
-      const html2pdf = html2pdfModule.default || html2pdfModule
+      // Dynamic imports to avoid SSR issues
+      const { jsPDF } = await import('jspdf')
+      const html2canvas = await import('html2canvas')
       
       const element = previewRef.current
+      const fileName = `${cvData.personalInfo.fullName || 'resume'}_CV.pdf`
       
-      // Create a deep clone to avoid affecting the original
+      // Create a deep clone of the element
       const clonedElement = element.cloneNode(true) as HTMLElement
       
-      // Aggressively clean up problematic elements and styles
-      const cleanElement = (el: HTMLElement) => {
-        // Remove all SVG elements
-        const svgs = el.querySelectorAll('svg, SVG')
-        svgs.forEach(svg => svg.remove())
+      // Create a temporary container with proper styling
+      const tempContainer = document.createElement('div')
+      tempContainer.style.position = 'absolute'
+      tempContainer.style.left = '-9999px'
+      tempContainer.style.top = '-9999px'
+      tempContainer.style.width = '21cm'
+      tempContainer.style.height = 'auto'
+      tempContainer.style.display = 'block'
+      tempContainer.style.backgroundColor = '#ffffff'
+      
+      // Create override style tag to force safe colors before html2canvas processes
+      const overrideStyle = document.createElement('style')
+      overrideStyle.setAttribute('data-pdf-override', 'true')
+      overrideStyle.textContent = `
+        * {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #111111 !important;
+        }
+      `
+      clonedElement.insertBefore(overrideStyle, clonedElement.firstChild)
+      
+      // Reset all transform and scale styles on the cloned element
+      clonedElement.style.transform = 'none'
+      clonedElement.style.scale = '1'
+      clonedElement.style.width = '21cm'
+      clonedElement.style.minHeight = '29.7cm'
+      clonedElement.style.margin = '0'
+      clonedElement.style.padding = '1.5cm'
+      clonedElement.style.fontFamily = 'Arial, sans-serif'
+      clonedElement.style.backgroundColor = '#ffffff'
+      clonedElement.style.color = '#000000'
+      clonedElement.style.boxShadow = 'none'
+      clonedElement.style.display = 'block'
+      
+      // Remove any transform from child elements
+      clonedElement.querySelectorAll('*').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.style.transform = 'none'
+          el.style.scale = '1'
+        }
+      })
+      
+      tempContainer.appendChild(clonedElement)
+      document.body.appendChild(tempContainer)
+      
+      try {
+        // Wait for rendering and style application
+        await new Promise(resolve => setTimeout(resolve, 200))
         
-        // Process all elements
-        const allElements = el.querySelectorAll('*')
-        allElements.forEach(elem => {
-          if (elem instanceof HTMLElement) {
-            // Get computed style to check for lab colors
-            const computedStyle = window.getComputedStyle(elem)
-            
-            // Remove problematic inline styles
-            const inlineStyle = elem.getAttribute('style')
-            if (inlineStyle) {
-              if (inlineStyle.includes('lab(') || 
-                  inlineStyle.includes('lch(') || 
-                  inlineStyle.includes('oklab(') ||
-                  inlineStyle.includes('oklch(')) {
-                elem.removeAttribute('style')
-              }
-            }
-            
-            // Force safe colors if needed
-            if (computedStyle.backgroundColor.includes('lab')) {
-              elem.style.backgroundColor = '#ffffff'
-            }
-            if (computedStyle.color.includes('lab')) {
-              elem.style.color = '#000000'
-            }
-          }
-        })
-      }
-      
-      cleanElement(clonedElement)
-      
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `${cvData.personalInfo.fullName || 'resume'}_CV.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
+        // Render to canvas
+        const canvas = await html2canvas.default(clonedElement, {
           scale: 2,
           useCORS: true,
           logging: false,
-          letterRendering: true,
-          allowTaint: true,
           backgroundColor: '#ffffff',
-          removeContainer: true, // Remove container after rendering
+          allowTaint: true,
+          imageTimeout: 15000,
           ignoreElements: (element: Element) => {
             const tagName = element.tagName?.toLowerCase()
-            return tagName === 'svg' || tagName === 'style' || tagName === 'link'
+            return tagName === 'svg' || tagName === 'script'
           }
-        },
-        jsPDF: {
+        })
+        
+        // A4 size in mm
+        const A4_WIDTH = 210
+        const A4_HEIGHT = 297
+        const MARGIN = 5
+        
+        const contentWidth = A4_WIDTH - MARGIN * 2
+        const contentHeight = (canvas.height * contentWidth) / canvas.width
+        
+        // Create PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
           unit: 'mm',
           format: 'a4',
-          orientation: 'portrait' as const,
-        },
+        })
+        
+        // Calculate pages needed
+        const pageContentHeight = A4_HEIGHT - MARGIN * 2
+        let currentY = MARGIN
+        let imageOffsetY = 0
+        
+        const imageData = canvas.toDataURL('image/jpeg', 0.98)
+        let pageNum = 0
+        
+        while (imageOffsetY < canvas.height) {
+          // Add new page (except for first iteration)
+          if (pageNum > 0) {
+            pdf.addPage()
+            currentY = MARGIN
+          }
+          
+          // Calculate how much of the image fits on this page
+          const imageHeightForPage = (pageContentHeight / contentHeight) * canvas.height
+          
+          // Create temp canvas for this page section
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = canvas.width
+          pageCanvas.height = Math.min(imageHeightForPage, canvas.height - imageOffsetY)
+          
+          const ctx = pageCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(
+              canvas,
+              0, imageOffsetY,
+              canvas.width, pageCanvas.height,
+              0, 0,
+              canvas.width, pageCanvas.height
+            )
+            
+            const pageImageData = pageCanvas.toDataURL('image/jpeg', 0.98)
+            const pageHeight = Math.min(pageContentHeight, (pageCanvas.height * contentWidth) / canvas.width)
+            
+            pdf.addImage(pageImageData, 'JPEG', MARGIN, currentY, contentWidth, pageHeight)
+          }
+          
+          imageOffsetY += pageCanvas.height
+          pageNum++
+        }
+        
+        pdf.save(fileName)
+        toast.success(t('cv.errors.cvDownloaded'))
+      } finally {
+        document.body.removeChild(tempContainer)
       }
-
-      console.log('Generating PDF...')
-      
-      // Create a fresh instance each time
-      const worker = html2pdf()
-      await worker.set(opt).from(clonedElement).save()
-
-      toast.success(t('cv.errors.cvDownloaded'))
     } catch (error: unknown) {
       console.error('PDF generation error:', error)
       const errorMessage = error instanceof Error ? error.message : t('cv.errors.unknownError')

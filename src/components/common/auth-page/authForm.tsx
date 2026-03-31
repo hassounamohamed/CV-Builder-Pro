@@ -4,13 +4,14 @@ import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { FileText, Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/contexts/I18nContext'
 import LanguageSwitcher from '@/components/common/language-switcher'
@@ -71,8 +72,8 @@ const AuthForm: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-bg-auth p-4">
-      <Card className="w-full max-w-md shadow-elegant glass-effect animate-scaleIn">
-        <CardHeader className="text-center space-y-4 animate-fadeIn">
+      <Card className="w-full max-w-md shadow-elegant glass-effect animate-scaleIn border-0">
+        <CardHeader className="text-center space-y-4 animate-fadeIn pt-6">
           <div className="flex items-center justify-between">
             <Link href="/">
               <Button variant="ghost" size="sm" className="hover:bg-background">
@@ -82,15 +83,29 @@ const AuthForm: React.FC = () => {
             </Link>
             <LanguageSwitcher />
           </div>
-          <div className="flex justify-center">
-            <div className="p-3 rounded-xl gradient-primary text-white transform-3d">
-              <FileText className="w-8 h-8" />
+          
+          {/* Enhanced Logo */}
+          <div className="flex justify-center pt-2">
+            <div className="relative w-24 h-24 hover:scale-110 transition-transform duration-300">
+              <Image
+                src="/icon.png"
+                alt="CV Builder Logo"
+                width={100}
+                height={100}
+                className="object-contain drop-shadow-lg"
+                priority
+              />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">{t('common.appName')}</CardTitle>
-          <CardDescription>
-            {t('auth.subtitle')}
-          </CardDescription>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              {t('common.appName')}
+            </CardTitle>
+            <CardDescription className="text-base">
+              {t('auth.subtitle')}
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <CardContent>
