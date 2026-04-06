@@ -8,13 +8,16 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import { Experience } from '@/types/cv'
 import { useI18n } from '@/contexts/I18nContext'
+import { useAI } from '@/hooks/useAI'
 
 const ExperienceForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
   const { t } = useI18n()
+  const { improve, isLoading } = useAI()
+  const [editingExpId, setEditingExpId] = useState<string | null>(null)
   const [currentExp, setCurrentExp] = useState<Partial<Experience>>({
     id: '',
     company: '',
@@ -25,10 +28,22 @@ const ExperienceForm: React.FC = () => {
     description: '',
   })
 
-  const handleAdd = () => {
+  const resetCurrentExp = () => {
+    setCurrentExp({
+      id: '',
+      company: '',
+      position: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: '',
+    })
+  }
+
+  const handleSave = () => {
     if (currentExp.company && currentExp.position && currentExp.startDate) {
       const newExp: Experience = {
-        id: Date.now().toString(),
+        id: editingExpId || Date.now().toString(),
         company: currentExp.company,
         position: currentExp.position,
         startDate: currentExp.startDate,
@@ -37,26 +52,53 @@ const ExperienceForm: React.FC = () => {
         description: currentExp.description || '',
       }
 
-      updateCVData({
-        experience: [...cvData.experience, newExp],
-      })
+      if (editingExpId) {
+        updateCVData({
+          experience: cvData.experience.map((exp) =>
+            exp.id === editingExpId ? newExp : exp
+          ),
+        })
+      } else {
+        updateCVData({
+          experience: [...cvData.experience, newExp],
+        })
+      }
 
-      setCurrentExp({
-        id: '',
-        company: '',
-        position: '',
-        startDate: '',
-        endDate: '',
-        current: false,
-        description: '',
-      })
+      setEditingExpId(null)
+      resetCurrentExp()
     }
+  }
+
+  const handleEdit = (exp: Experience) => {
+    setCurrentExp({ ...exp })
+    setEditingExpId(exp.id)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingExpId(null)
+    resetCurrentExp()
   }
 
   const handleRemove = (id: string) => {
     updateCVData({
       experience: cvData.experience.filter((exp) => exp.id !== id),
     })
+  }
+
+  const handleImproveDescription = async () => {
+    const description = currentExp.description || ''
+    const result = await improve({ type: 'improve-experience', content: description })
+    if (result) {
+      setCurrentExp({ ...currentExp, description: result })
+    }
+  }
+
+  const handleGrammarDescription = async () => {
+    const description = currentExp.description || ''
+    const result = await improve({ type: 'check-grammar', content: description })
+    if (result) {
+      setCurrentExp({ ...currentExp, description: result })
+    }
   }
 
   return (
@@ -81,14 +123,25 @@ const ExperienceForm: React.FC = () => {
                     {exp.startDate} - {exp.current ? t('common.present') : exp.endDate}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemove(exp.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(exp)}
+                    aria-label={t('common.edit')}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemove(exp.id)}
+                    className="text-destructive hover:text-destructive/80"
+                    aria-label={t('common.delete')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -165,12 +218,27 @@ const ExperienceForm: React.FC = () => {
               onChange={(e) => setCurrentExp({ ...currentExp, description: e.target.value })}
               className="min-h-[100px]"
             />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={handleImproveDescription} disabled={isLoading}>
+                {t('cv.ai.improveDescription')}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleGrammarDescription} disabled={isLoading}>
+                {t('cv.ai.checkGrammar')}
+              </Button>
+            </div>
           </div>
 
-          <Button onClick={handleAdd} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('cv.experience.addButton')}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button onClick={handleSave} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              {editingExpId ? t('common.update') : t('cv.experience.addButton')}
+            </Button>
+            {editingExpId && (
+              <Button type="button" variant="outline" className="w-full" onClick={handleCancelEdit}>
+                {t('common.cancel')}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

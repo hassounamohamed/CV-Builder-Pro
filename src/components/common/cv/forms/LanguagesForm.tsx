@@ -6,13 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import { Certification, Language } from '@/types/cv'
 import { useI18n } from '@/contexts/I18nContext'
 
 const LanguagesForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
   const { t } = useI18n()
+  const [editingLanguageId, setEditingLanguageId] = useState<string | null>(null)
+  const [editingCertificationId, setEditingCertificationId] = useState<string | null>(null)
   const [currentLanguage, setCurrentLanguage] = useState<Partial<Language>>({
     id: '',
     name: '',
@@ -24,22 +26,45 @@ const LanguagesForm: React.FC = () => {
     date: '',
   })
 
-  const handleAdd = () => {
+  const resetCurrentLanguage = () => {
+    setCurrentLanguage({
+      id: '',
+      name: '',
+    })
+  }
+
+  const handleSaveLanguage = () => {
     if (currentLanguage.name) {
       const newLanguage: Language = {
-        id: Date.now().toString(),
+        id: editingLanguageId || Date.now().toString(),
         name: currentLanguage.name,
       }
 
-      updateCVData({
-        languages: [...cvData.languages, newLanguage],
-      })
+      if (editingLanguageId) {
+        updateCVData({
+          languages: cvData.languages.map((lang) =>
+            lang.id === editingLanguageId ? newLanguage : lang
+          ),
+        })
+      } else {
+        updateCVData({
+          languages: [...cvData.languages, newLanguage],
+        })
+      }
 
-      setCurrentLanguage({
-        id: '',
-        name: '',
-      })
+      setEditingLanguageId(null)
+      resetCurrentLanguage()
     }
+  }
+
+  const handleEditLanguage = (language: Language) => {
+    setCurrentLanguage({ ...language })
+    setEditingLanguageId(language.id)
+  }
+
+  const handleCancelLanguageEdit = () => {
+    setEditingLanguageId(null)
+    resetCurrentLanguage()
   }
 
   const handleRemove = (id: string) => {
@@ -48,26 +73,49 @@ const LanguagesForm: React.FC = () => {
     })
   }
 
-  const handleAddCertification = () => {
+  const resetCurrentCertification = () => {
+    setCurrentCertification({
+      id: '',
+      name: '',
+      issuer: '',
+      date: '',
+    })
+  }
+
+  const handleSaveCertification = () => {
     if (currentCertification.name) {
       const newCertification: Certification = {
-        id: Date.now().toString(),
+        id: editingCertificationId || Date.now().toString(),
         name: currentCertification.name,
         issuer: currentCertification.issuer || '',
         date: currentCertification.date || '',
       }
 
-      updateCVData({
-        certifications: [...(cvData.certifications || []), newCertification],
-      })
+      if (editingCertificationId) {
+        updateCVData({
+          certifications: (cvData.certifications || []).map((cert) =>
+            cert.id === editingCertificationId ? newCertification : cert
+          ),
+        })
+      } else {
+        updateCVData({
+          certifications: [...(cvData.certifications || []), newCertification],
+        })
+      }
 
-      setCurrentCertification({
-        id: '',
-        name: '',
-        issuer: '',
-        date: '',
-      })
+      setEditingCertificationId(null)
+      resetCurrentCertification()
     }
+  }
+
+  const handleEditCertification = (certification: Certification) => {
+    setCurrentCertification({ ...certification })
+    setEditingCertificationId(certification.id)
+  }
+
+  const handleCancelCertificationEdit = () => {
+    setEditingCertificationId(null)
+    resetCurrentCertification()
   }
 
   const handleRemoveCertification = (id: string) => {
@@ -93,8 +141,16 @@ const LanguagesForm: React.FC = () => {
               >
                 <span>{language.name}</span>
                 <button
-                  onClick={() => handleRemove(language.id)}
+                  onClick={() => handleEditLanguage(language)}
                   className="hover:opacity-70 transition-opacity"
+                  aria-label={t('common.edit')}
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleRemove(language.id)}
+                  className="text-destructive hover:text-destructive/80 transition-colors"
+                  aria-label={t('common.delete')}
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -116,16 +172,23 @@ const LanguagesForm: React.FC = () => {
               onChange={(e) => setCurrentLanguage({ ...currentLanguage, name: e.target.value })}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  handleAdd()
+                  handleSaveLanguage()
                 }
               }}
             />
           </div>
 
-          <Button onClick={handleAdd} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('cv.languages.addButton')}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button onClick={handleSaveLanguage} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              {editingLanguageId ? t('common.update') : t('cv.languages.addButton')}
+            </Button>
+            {editingLanguageId && (
+              <Button type="button" variant="outline" className="w-full" onClick={handleCancelLanguageEdit}>
+                {t('common.cancel')}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4 pt-4 border-t">
@@ -148,12 +211,22 @@ const LanguagesForm: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleRemoveCertification(certification.id)}
-                    className="hover:opacity-70 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleEditCertification(certification)}
+                      className="hover:opacity-70 transition-opacity"
+                      aria-label={t('common.edit')}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveCertification(certification.id)}
+                      className="text-destructive hover:text-destructive/80 transition-colors"
+                      aria-label={t('common.delete')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -189,10 +262,17 @@ const LanguagesForm: React.FC = () => {
             />
           </div>
 
-          <Button onClick={handleAddCertification} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Certification
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button onClick={handleSaveCertification} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              {editingCertificationId ? t('common.update') : 'Add Certification'}
+            </Button>
+            {editingCertificationId && (
+              <Button type="button" variant="outline" className="w-full" onClick={handleCancelCertificationEdit}>
+                {t('common.cancel')}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

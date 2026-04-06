@@ -6,13 +6,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useI18n } from '@/contexts/I18nContext'
+import { Button } from '@/components/ui/button'
+import { useAI } from '@/hooks/useAI'
 
 const SummaryForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
   const { t } = useI18n()
+  const { improve, isLoading } = useAI()
 
   const handleChange = (value: string) => {
     updateCVData({ summary: value })
+  }
+
+  const handleImprove = async () => {
+    const result = await improve({ type: 'improve-summary', content: cvData.summary })
+    if (result) {
+      handleChange(result)
+    }
+  }
+
+  const handleGrammar = async () => {
+    const result = await improve({ type: 'check-grammar', content: cvData.summary })
+    if (result) {
+      handleChange(result)
+    }
   }
 
   return (
@@ -33,6 +50,14 @@ const SummaryForm: React.FC = () => {
             onChange={(e) => handleChange(e.target.value)}
             className="min-h-[200px]"
           />
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={handleImprove} disabled={isLoading}>
+              {t('cv.ai.improveSummary')}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleGrammar} disabled={isLoading}>
+              {t('cv.ai.checkGrammar')}
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             {cvData.summary.length} / 500 {t('cv.summary.characters')}
           </p>

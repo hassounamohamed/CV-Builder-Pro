@@ -22,6 +22,10 @@ export const translations = {
       next: "Next",
       save: "Save",
       saving: "Saving...",
+      edit: "Edit",
+      update: "Update",
+      cancel: "Cancel",
+      delete: "Delete",
       downloadPdf: "Download PDF",
       downloadWord: "Download Word",
       generating: "Generating...",
@@ -96,6 +100,11 @@ export const translations = {
       passwordLength: "Password must be at least 6 characters",
     },
     cv: {
+      ai: {
+        improveSummary: "Improve Summary",
+        improveDescription: "Improve Description",
+        checkGrammar: "Check Grammar",
+      },
       steps: {
         personal: "Personal Info",
         summary: "Summary",
@@ -212,6 +221,10 @@ export const translations = {
       next: "Suivant",
       save: "Enregistrer",
       saving: "Enregistrement...",
+      edit: "Modifier",
+      update: "Mettre à jour",
+      cancel: "Annuler",
+      delete: "Supprimer",
       downloadPdf: "Télécharger PDF",
       downloadWord: "Télécharger Word",
       generating: "Génération...",
@@ -286,6 +299,11 @@ export const translations = {
       passwordLength: "Le mot de passe doit contenir au moins 6 caractères",
     },
     cv: {
+      ai: {
+        improveSummary: "Améliorer le résumé",
+        improveDescription: "Améliorer la description",
+        checkGrammar: "Vérifier la grammaire",
+      },
       steps: {
         personal: "Infos personnelles",
         summary: "Résumé",
@@ -402,6 +420,10 @@ export const translations = {
       next: "التالي",
       save: "حفظ",
       saving: "جارٍ الحفظ...",
+      edit: "تعديل",
+      update: "تحديث",
+      cancel: "إلغاء",
+      delete: "حذف",
       downloadPdf: "تنزيل PDF",
       downloadWord: "تنزيل Word",
       generating: "جارٍ الإنشاء...",
@@ -470,6 +492,11 @@ export const translations = {
       passwordLength: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
     },
     cv: {
+      ai: {
+        improveSummary: "تحسين الملخص",
+        improveDescription: "تحسين الوصف",
+        checkGrammar: "تدقيق القواعد",
+      },
       steps: {
         personal: "البيانات الشخصية",
         summary: "الملخص",

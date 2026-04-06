@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     let prompt = ''
 
     if (type === 'improve-summary') {
-      prompt = `You are a professional CV writer. Improve and rewrite the following professional summary to be more impactful, concise, and professional. Keep it under 3-4 sentences:
+      prompt = `You are a professional CV writer. Improve and rewrite the following professional summary to be more impactful, concise, and professional. Use first-person voice ("I'm", "I", "my", "me"). Keep it under 3-4 sentences:
 
 "${content}"
 
@@ -31,11 +31,11 @@ Return only the improved summary, nothing else.`
 
 Return only the improved description with bullet points, nothing else.`
     } else if (type === 'check-grammar') {
-      prompt = `You are a grammar and professional writing expert. Check the following text for grammar, spelling, and professional writing issues. Provide suggestions:
+      prompt = `You are a grammar and professional writing expert. Check the following text for grammar, spelling, and professional writing issues. Return the corrected text only, no JSON and no extra text:
 
 "${content}"
 
-Return a JSON object with: { "original": text, "corrected": corrected_text, "suggestions": [array of improvements] }`
+Return only the corrected text.`
     }
 
     const response = await fetch(OPENROUTER_URL, {

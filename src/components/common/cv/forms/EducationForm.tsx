@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import { Education } from '@/types/cv'
 import { useI18n } from '@/contexts/I18nContext'
 
 const EducationForm: React.FC = () => {
   const { cvData, updateCVData } = useCV()
   const { t } = useI18n()
+  const [editingEduId, setEditingEduId] = useState<string | null>(null)
   const [currentEdu, setCurrentEdu] = useState<Partial<Education>>({
     id: '',
     institution: '',
@@ -26,10 +27,23 @@ const EducationForm: React.FC = () => {
     description: '',
   })
 
-  const handleAdd = () => {
+  const resetCurrentEdu = () => {
+    setCurrentEdu({
+      id: '',
+      institution: '',
+      degree: '',
+      field: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: '',
+    })
+  }
+
+  const handleSave = () => {
     if (currentEdu.institution && currentEdu.degree && currentEdu.field && currentEdu.startDate) {
       const newEdu: Education = {
-        id: Date.now().toString(),
+        id: editingEduId || Date.now().toString(),
         institution: currentEdu.institution,
         degree: currentEdu.degree,
         field: currentEdu.field,
@@ -39,21 +53,31 @@ const EducationForm: React.FC = () => {
         description: currentEdu.description,
       }
 
-      updateCVData({
-        education: [...cvData.education, newEdu],
-      })
+      if (editingEduId) {
+        updateCVData({
+          education: cvData.education.map((edu) =>
+            edu.id === editingEduId ? newEdu : edu
+          ),
+        })
+      } else {
+        updateCVData({
+          education: [...cvData.education, newEdu],
+        })
+      }
 
-      setCurrentEdu({
-        id: '',
-        institution: '',
-        degree: '',
-        field: '',
-        startDate: '',
-        endDate: '',
-        current: false,
-        description: '',
-      })
+      setEditingEduId(null)
+      resetCurrentEdu()
     }
+  }
+
+  const handleEdit = (edu: Education) => {
+    setCurrentEdu({ ...edu })
+    setEditingEduId(edu.id)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEduId(null)
+    resetCurrentEdu()
   }
 
   const handleRemove = (id: string) => {
@@ -84,14 +108,25 @@ const EducationForm: React.FC = () => {
                     {edu.startDate} - {edu.current ? t('common.present') : edu.endDate}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemove(edu.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(edu)}
+                    aria-label={t('common.edit')}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemove(edu.id)}
+                    className="text-destructive hover:text-destructive/80"
+                    aria-label={t('common.delete')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -180,10 +215,17 @@ const EducationForm: React.FC = () => {
             />
           </div>
 
-          <Button onClick={handleAdd} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('cv.education.addButton')}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button onClick={handleSave} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              {editingEduId ? t('common.update') : t('cv.education.addButton')}
+            </Button>
+            {editingEduId && (
+              <Button type="button" variant="outline" className="w-full" onClick={handleCancelEdit}>
+                {t('common.cancel')}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

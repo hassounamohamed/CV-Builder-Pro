@@ -30,6 +30,16 @@ export function useAI() {
       }
 
       const data = await response.json()
+      if (type === 'check-grammar') {
+        try {
+          const parsed = JSON.parse(data.result)
+          if (parsed?.corrected) {
+            return parsed.corrected
+          }
+        } catch {
+          // If it's not JSON, return as-is.
+        }
+      }
       return data.result
     } catch (error) {
       console.error('AI improvement error:', error)
