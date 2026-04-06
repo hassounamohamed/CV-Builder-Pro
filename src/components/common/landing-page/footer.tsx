@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText } from 'lucide-react'
+import Image from 'next/image'
 import { useI18n } from '@/contexts/I18nContext'
 
 export default function Footer() {
@@ -11,9 +11,13 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 text-white">
-              <FileText className="w-5 h-5" />
-            </div>
+            <Image
+              src="/icon.png"
+              alt={t('common.appName')}
+              width={100}
+              height={120}
+              className="rounded-lg"
+            />
             <span className="text-lg font-bold text-slate-900">{t('common.appName')}</span>
           </div>
           <p className="text-slate-600 text-sm">
