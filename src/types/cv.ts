@@ -1,6 +1,6 @@
 // CV Types and Interfaces
 
-export type CVStep = 'personal' | 'summary' | 'experience' | 'education' | 'skills' | 'languages'
+export type CVStep = 'personal' | 'summary' | 'experience' | 'projects' | 'education' | 'skills' | 'languages'
 
 export interface PersonalInfo {
   fullName: string
@@ -34,6 +34,18 @@ export interface Education {
   description?: string
 }
 
+export interface Project {
+  id: string
+  name: string
+  role?: string
+  technologies?: string
+  link?: string
+  startDate?: string
+  endDate?: string
+  current: boolean
+  description?: string
+}
+
 export interface Skill {
   id: string
   name: string
@@ -63,13 +75,14 @@ export interface CVData {
   personalInfo: PersonalInfo
   summary: string
   experience: Experience[]
+  projects: Project[]
   education: Education[]
   skills: Skill[]
   languages: Language[]
   certifications?: Certification[]
   awards?: Award[]
-  createdAt?: Date | any // Allow Firestore FieldValue
-  updatedAt?: Date | any // Allow Firestore FieldValue
+  createdAt?: Date | unknown // Allow Firestore FieldValue
+  updatedAt?: Date | unknown // Allow Firestore FieldValue
 }
 
 export interface StepConfig {
@@ -82,6 +95,7 @@ export const cvSteps: StepConfig[] = [
   { id: 'personal', label: 'Personal Info', icon: 'User' },
   { id: 'summary', label: 'Summary', icon: 'FileText' },
   { id: 'experience', label: 'Experience', icon: 'Briefcase' },
+  { id: 'projects', label: 'Projects', icon: 'FolderKanban' },
   { id: 'education', label: 'Education', icon: 'GraduationCap' },
   { id: 'skills', label: 'Skills', icon: 'Award' },
   { id: 'languages', label: 'Languages', icon: 'Globe' },
@@ -99,6 +113,7 @@ export const initialCVData: CVData = {
   },
   summary: '',
   experience: [],
+  projects: [],
   education: [],
   skills: [],
   languages: [],

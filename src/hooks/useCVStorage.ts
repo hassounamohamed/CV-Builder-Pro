@@ -66,6 +66,9 @@ export const useCVStorage = () => {
         if (!data.languages) {
           data.languages = []
         }
+        if (!data.projects) {
+          data.projects = []
+        }
         if (!data.certifications) {
           data.certifications = []
         }

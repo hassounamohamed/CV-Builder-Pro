@@ -43,6 +43,7 @@ export default function SharedCVPage() {
 
         setCvData({
           ...data,
+          projects: data.projects || [],
           languages: data.languages || [],
         });
       } catch (error) {

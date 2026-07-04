@@ -119,6 +119,55 @@ const CVPreview = forwardRef<HTMLDivElement, CVPreviewProps>(({ cvData }, ref) =
         </div>
       )}
 
+      {cvData.projects.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>
+            {t('cv.preview.projects')}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            {cvData.projects.map((project) => {
+              const hasDates = project.startDate || project.endDate || project.current
+              const hasLink = Boolean(project.link)
+
+              return (
+                <div key={project.id} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem', gap: '0.8rem' }}>
+                    <h3 style={{ color: '#000000', fontSize: '1rem', fontWeight: '700', margin: '0' }}>
+                      {project.name}{project.role ? ` (${project.role})` : ''}
+                    </h3>
+                    {hasDates && (
+                      <span style={{ color: '#333333', fontSize: '0.9rem', whiteSpace: 'nowrap', flexShrink: 0, fontStyle: 'italic' }}>
+                        {formatDate(project.startDate || '')} - {project.current ? t('common.present') : formatDate(project.endDate || '')}
+                      </span>
+                    )}
+                  </div>
+
+                  {project.technologies && (
+                    <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 0.2rem 0' }}>
+                      <strong>{t('cv.projects.technologies')}:</strong> {project.technologies}
+                    </p>
+                  )}
+
+                  {hasLink && (
+                    <p style={{ color: '#111111', fontSize: '0.92rem', margin: '0 0 0.2rem 0' }}>
+                      <strong>{t('cv.projects.link')}:</strong> {project.link}
+                    </p>
+                  )}
+
+                  {project.description && (
+                    <ul style={{ margin: '0.1rem 0 0 1rem', padding: 0, color: '#111111', fontSize: '0.92rem', lineHeight: '1.35' }}>
+                      {toBullets(project.description).map((line, idx) => (
+                        <li key={`${project.id}-${idx}`}>{line}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {cvData.education.length > 0 && (
         <div style={{ marginBottom: '1rem' }}>
           <h2 style={{ color: '#000000', fontSize: '1.05rem', fontWeight: '700', textTransform: 'uppercase', margin: '0 0 0.45rem 0', borderBottom: '1px solid #111111', paddingBottom: '0.22rem' }}>

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { CVStep, cvSteps } from '@/types/cv'
-import { User, FileText, Briefcase, GraduationCap, Award, Check } from 'lucide-react'
+import { User, FileText, Briefcase, GraduationCap, Award, Check, Globe, FolderKanban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/contexts/I18nContext'
 
@@ -16,8 +16,10 @@ const iconMap = {
   User,
   FileText,
   Briefcase,
+  FolderKanban,
   GraduationCap,
   Award,
+  Globe,
 }
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({

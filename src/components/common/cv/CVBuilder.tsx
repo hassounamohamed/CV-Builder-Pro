@@ -9,6 +9,7 @@ import StepIndicator from './StepIndicator'
 import PersonalInfoForm from './forms/PersonalInfoForm'
 import SummaryForm from './forms/SummaryForm'
 import ExperienceForm from './forms/ExperienceForm'
+import ProjectsForm from './forms/ProjectsForm'
 import EducationForm from './forms/EducationForm'
 import SkillsForm from './forms/SkillsForm'
 import LanguagesForm from './forms/LanguagesForm'
@@ -99,142 +100,222 @@ const CVBuilder: React.FC = () => {
     setIsDownloading(true)
 
     try {
-      // Dynamic imports to avoid SSR issues
       const { jsPDF } = await import('jspdf')
       const html2canvas = await import('html2canvas')
-      
+
       const element = previewRef.current
-      const fileName = `${cvData.personalInfo.fullName || 'resume'}_CV.pdf`
-      
-      // Create a deep clone of the element
-      const clonedElement = element.cloneNode(true) as HTMLElement
-      
-      // Create a temporary container with proper styling
-      const tempContainer = document.createElement('div')
-      tempContainer.style.position = 'absolute'
-      tempContainer.style.left = '-9999px'
-      tempContainer.style.top = '-9999px'
-      tempContainer.style.width = '21cm'
-      tempContainer.style.height = 'auto'
-      tempContainer.style.display = 'block'
-      tempContainer.style.backgroundColor = '#ffffff'
-      
-      // Create override style tag to force safe colors before html2canvas processes
-      const overrideStyle = document.createElement('style')
-      overrideStyle.setAttribute('data-pdf-override', 'true')
-      overrideStyle.textContent = `
-        * {
-          background-color: #ffffff !important;
-          color: #000000 !important;
-          border-color: #111111 !important;
+      const fileName = `${sanitizeFileName(cvData.personalInfo.fullName || 'resume')}_CV.pdf`
+
+      // ── Step 1: Capture computed (rgb) colors from the live DOM ─────────────
+      // Browser's getComputedStyle resolves oklch/lab → rgb automatically.
+      // We must do this NOW, while elements are in the real document.
+      const COLOR_PROPS = [
+        'color', 'backgroundColor',
+        'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+        'outlineColor', 'textDecorationColor',
+      ]
+      const liveEls = [element, ...Array.from(element.querySelectorAll<HTMLElement>('*'))]
+      const capturedColors = liveEls.map((el) => {
+        const cs = window.getComputedStyle(el)
+        const map: Record<string, string> = {}
+        for (const p of COLOR_PROPS) {
+          const v = cs.getPropertyValue(p)
+          if (v && v !== 'initial' && v !== 'inherit') map[p] = v
+        }
+        return map
+      })
+
+      // ── Step 2: Build a clean offscreen clone at full A4 width ──────────────
+      // The live CVPreview is inside a `scale(0.5)` wrapper for UI display.
+      // If we pass the live element to html2canvas, the scale transform causes
+      // text to overlap. Instead we clone it into an isolated container that
+      // has NO parent transforms, so layout is fully re-computed at full size.
+      const clone = element.cloneNode(true) as HTMLElement
+
+      // Override every CSS custom property to safe hex (avoids oklch parse errors)
+      const safeVarsStyle = document.createElement('style')
+      safeVarsStyle.textContent = `
+        *, :root {
+          --background: #ffffff; --foreground: #252525;
+          --card: #ffffff; --card-foreground: #252525;
+          --popover: #ffffff; --popover-foreground: #252525;
+          --primary: #333333; --primary-foreground: #fafafa;
+          --secondary: #f7f7f7; --secondary-foreground: #333333;
+          --muted: #f7f7f7; --muted-foreground: #717171;
+          --accent: #f7f7f7; --accent-foreground: #333333;
+          --destructive: #dc2626;
+          --border: #e9e9e9; --input: #e9e9e9; --ring: #b3b3b3;
         }
       `
-      clonedElement.insertBefore(overrideStyle, clonedElement.firstChild)
-      
-      // Reset all transform and scale styles on the cloned element
-      clonedElement.style.transform = 'none'
-      clonedElement.style.scale = '1'
-      clonedElement.style.width = '21cm'
-      clonedElement.style.minHeight = '29.7cm'
-      clonedElement.style.margin = '0'
-      clonedElement.style.padding = '1.5cm'
-      clonedElement.style.fontFamily = 'Arial, sans-serif'
-      clonedElement.style.backgroundColor = '#ffffff'
-      clonedElement.style.color = '#000000'
-      clonedElement.style.boxShadow = 'none'
-      clonedElement.style.display = 'block'
-      
-      // Remove any transform from child elements
-      clonedElement.querySelectorAll('*').forEach((el) => {
-        if (el instanceof HTMLElement) {
-          el.style.transform = 'none'
-          el.style.scale = '1'
+      clone.prepend(safeVarsStyle)
+
+      // Reset clone layout: full A4 width, no scale, no shadow
+      clone.style.cssText = `
+        width: 794px !important;
+        min-height: auto !important;
+        padding: 56px !important;
+        margin: 0 !important;
+        transform: none !important;
+        scale: 1 !important;
+        font-family: Arial, sans-serif !important;
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        position: static !important;
+      `
+
+      // Inline the rgb() colors we captured + reset transforms on every child
+      const cloneEls = Array.from(clone.querySelectorAll<HTMLElement>('*'))
+      cloneEls.forEach((el, i) => {
+        el.style.transform = 'none'
+        el.style.animation = 'none'
+        el.style.transition = 'none'
+        // i+1 because capturedColors[0] = root element (clone itself)
+        const map = capturedColors[i + 1]
+        if (map) {
+          for (const [prop, val] of Object.entries(map)) {
+            ;(el.style as unknown as Record<string, string>)[prop] = val
+          }
         }
       })
-      
-      tempContainer.appendChild(clonedElement)
-      document.body.appendChild(tempContainer)
-      
+      // Apply root colors too
+      if (capturedColors[0]) {
+        for (const [prop, val] of Object.entries(capturedColors[0])) {
+          ;(clone.style as unknown as Record<string, string>)[prop] = val
+        }
+      }
+
+      // Mount offscreen — must be in DOM for html2canvas to measure layout
+      const wrapper = document.createElement('div')
+      wrapper.style.cssText = `
+        position: fixed; left: -9999px; top: 0;
+        width: 794px; height: auto; overflow: visible;
+        background: #ffffff; z-index: -9999;
+        transform: none !important;
+      `
+      wrapper.appendChild(clone)
+      document.body.appendChild(wrapper)
+
       try {
-        // Wait for rendering and style application
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        // Render to canvas
-        const canvas = await html2canvas.default(clonedElement, {
+        // Let the browser fully paint the cloned layout
+        await new Promise((r) => setTimeout(r, 350))
+
+        const canvas = await html2canvas.default(clone, {
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
           allowTaint: true,
           imageTimeout: 15000,
-          ignoreElements: (element: Element) => {
-            const tagName = element.tagName?.toLowerCase()
-            return tagName === 'svg' || tagName === 'script'
-          }
+          // onclone safety net: override CSS vars again in h2c's own clone doc
+          onclone: (doc: Document) => {
+            const s = doc.createElement('style')
+            s.textContent = `
+              *, :root {
+                --background:#ffffff; --foreground:#252525;
+                --card:#ffffff; --card-foreground:#252525;
+                --secondary:#f7f7f7; --secondary-foreground:#333333;
+                --muted:#f7f7f7; --muted-foreground:#717171;
+                --accent:#f7f7f7; --accent-foreground:#333333;
+                --destructive:#dc2626;
+                --border:#e9e9e9; --input:#e9e9e9; --ring:#b3b3b3;
+              }
+            `
+            doc.head.appendChild(s)
+          },
         })
-        
-        // A4 size in mm
-        const A4_WIDTH = 210
-        const A4_HEIGHT = 297
+
+        // ── Step 3: Smart page break detection + build PDF ────────────────────
+        // Instead of slicing at a fixed A4 height (which cuts through text),
+        // we scan pixel rows near each potential cut point and find the row
+        // with the most white/near-white pixels — i.e. a gap between sections.
+        const A4_W = 210
+        const A4_H = 297
         const MARGIN = 5
-        
-        const contentWidth = A4_WIDTH - MARGIN * 2
+        const contentWidth = A4_W - MARGIN * 2
         const contentHeight = (canvas.height * contentWidth) / canvas.width
-        
-        // Create PDF
+
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
           format: 'a4',
         })
-        
-        // Calculate pages needed
-        const pageContentHeight = A4_HEIGHT - MARGIN * 2
-        let currentY = MARGIN
-        let imageOffsetY = 0
-        
-        const imageData = canvas.toDataURL('image/jpeg', 0.98)
-        let pageNum = 0
-        
-        while (imageOffsetY < canvas.height) {
-          // Add new page (except for first iteration)
-          if (pageNum > 0) {
-            pdf.addPage()
-            currentY = MARGIN
+
+        // How many canvas pixels correspond to one A4 page of content
+        const pageContentHeight = A4_H - MARGIN * 2
+        const pageHeightInPx = Math.floor((pageContentHeight / contentHeight) * canvas.height)
+
+        // Read the full canvas pixel data once (avoid repeated reads)
+        const fullCtx = document.createElement('canvas')
+        fullCtx.width = canvas.width
+        fullCtx.height = canvas.height
+        const fullCtx2d = fullCtx.getContext('2d')!
+        fullCtx2d.drawImage(canvas, 0, 0)
+        const pixelData = fullCtx2d.getImageData(0, 0, canvas.width, canvas.height).data
+
+        // Counts how many "white-ish" pixels are in a given row
+        const whitenessOfRow = (row: number): number => {
+          let count = 0
+          const rowStart = row * canvas.width * 4
+          for (let x = 0; x < canvas.width; x++) {
+            const i = rowStart + x * 4
+            const r = pixelData[i], g = pixelData[i + 1], b = pixelData[i + 2]
+            if (r > 240 && g > 240 && b > 240) count++
           }
-          
-          // Calculate how much of the image fits on this page
-          const imageHeightForPage = (pageContentHeight / contentHeight) * canvas.height
-          
-          // Create temp canvas for this page section
+          return count
+        }
+
+        // Find the best (whitest) row within a search window around `targetRow`
+        const findBestBreak = (targetRow: number): number => {
+          const window = Math.floor(pageHeightInPx * 0.08) // ±8% of page height
+          const lo = Math.max(0, targetRow - window)
+          const hi = Math.min(canvas.height - 1, targetRow + window)
+          let bestRow = targetRow
+          let bestScore = -1
+          for (let row = lo; row <= hi; row++) {
+            const score = whitenessOfRow(row)
+            if (score > bestScore) { bestScore = score; bestRow = row }
+          }
+          return bestRow
+        }
+
+        let imageOffsetY = 0
+        let pageNum = 0
+
+        while (imageOffsetY < canvas.height) {
+          if (pageNum > 0) pdf.addPage()
+
+          const nominalEnd = imageOffsetY + pageHeightInPx
+          // For last page or if there's little content left, don't search
+          const cutRow = nominalEnd >= canvas.height
+            ? canvas.height
+            : findBestBreak(nominalEnd)
+
+          const sliceHeight = cutRow - imageOffsetY
           const pageCanvas = document.createElement('canvas')
           pageCanvas.width = canvas.width
-          pageCanvas.height = Math.min(imageHeightForPage, canvas.height - imageOffsetY)
-          
-          const ctx = pageCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(
-              canvas,
-              0, imageOffsetY,
-              canvas.width, pageCanvas.height,
-              0, 0,
-              canvas.width, pageCanvas.height
-            )
-            
-            const pageImageData = pageCanvas.toDataURL('image/jpeg', 0.98)
-            const pageHeight = Math.min(pageContentHeight, (pageCanvas.height * contentWidth) / canvas.width)
-            
-            pdf.addImage(pageImageData, 'JPEG', MARGIN, currentY, contentWidth, pageHeight)
-          }
-          
-          imageOffsetY += pageCanvas.height
+          pageCanvas.height = Math.max(1, sliceHeight)
+
+          const ctx = pageCanvas.getContext('2d')!
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+          ctx.drawImage(canvas, 0, imageOffsetY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight)
+
+          const pageImageData = pageCanvas.toDataURL('image/jpeg', 0.95)
+          const pageHeight = (sliceHeight * contentWidth) / canvas.width
+          pdf.addImage(pageImageData, 'JPEG', MARGIN, MARGIN, contentWidth, pageHeight)
+
+          imageOffsetY = cutRow
           pageNum++
         }
-        
+
         pdf.save(fileName)
         toast.success(t('cv.errors.cvDownloaded'))
       } finally {
-        document.body.removeChild(tempContainer)
+        // Always clean up the offscreen wrapper
+        document.body.removeChild(wrapper)
       }
     } catch (error: unknown) {
       console.error('PDF generation error:', error)
@@ -370,6 +451,72 @@ const CVBuilder: React.FC = () => {
               )
             })
           }
+          lines.push(new Paragraph({ text: '', spacing: { after: 80 } }))
+        })
+      }
+
+      if (cvData.projects.length > 0) {
+        pushSectionTitle(t('cv.preview.projects'))
+
+        cvData.projects.forEach((project) => {
+          const hasDates = project.startDate || project.endDate || project.current
+          const dateRange = hasDates
+            ? `${formatDateForExport(project.startDate || '')} - ${project.current ? t('common.present') : formatDateForExport(project.endDate || '')}`
+            : ''
+          const title = project.role ? `${project.name} (${project.role})` : project.name
+
+          lines.push(
+            new Paragraph({
+              children: [new TextRun({ text: title, bold: true })],
+              spacing: { after: 40 },
+            })
+          )
+
+          if (dateRange) {
+            lines.push(
+              new Paragraph({
+                children: [new TextRun({ text: dateRange, italics: true })],
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 40 },
+              })
+            )
+          }
+
+          if (project.technologies) {
+            lines.push(
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `${t('cv.projects.technologies')}: `, bold: true }),
+                  new TextRun({ text: project.technologies }),
+                ],
+                spacing: { after: 40 },
+              })
+            )
+          }
+
+          if (project.link) {
+            lines.push(
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `${t('cv.projects.link')}: `, bold: true }),
+                  new TextRun({ text: project.link }),
+                ],
+                spacing: { after: 40 },
+              })
+            )
+          }
+
+          if (project.description) {
+            toBullets(project.description).forEach((bullet) => {
+              lines.push(
+                new Paragraph({
+                  text: bullet,
+                  bullet: { level: 0 },
+                })
+              )
+            })
+          }
+
           lines.push(new Paragraph({ text: '', spacing: { after: 80 } }))
         })
       }
@@ -525,6 +672,8 @@ const CVBuilder: React.FC = () => {
         return <SummaryForm />
       case 'experience':
         return <ExperienceForm />
+      case 'projects':
+        return <ProjectsForm />
       case 'education':
         return <EducationForm />
       case 'skills':
