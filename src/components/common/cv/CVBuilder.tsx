@@ -14,8 +14,9 @@ import EducationForm from './forms/EducationForm'
 import SkillsForm from './forms/SkillsForm'
 import LanguagesForm from './forms/LanguagesForm'
 import CVPreview from './CVPreview'
+import FeedbackModal from './FeedbackModal'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Save, Download, Eye, EyeOff, LogOut, Share2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Save, Download, Eye, EyeOff, LogOut, Share2, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/contexts/I18nContext'
 import LanguageSwitcher from '@/components/common/language-switcher'
@@ -31,6 +32,7 @@ const CVBuilder: React.FC = () => {
   const [isSharing, setIsSharing] = useState(false)
   const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [showPreview, setShowPreview] = useState(true)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
   const { t, locale } = useI18n()
 
@@ -66,6 +68,12 @@ const CVBuilder: React.FC = () => {
         setCompletedSteps([...completedSteps, currentStep])
       }
       setCurrentStep(cvSteps[currentStepIndex + 1].id)
+    } else {
+      // Last step — mark complete and show feedback modal
+      if (!completedSteps.includes(currentStep)) {
+        setCompletedSteps([...completedSteps, currentStep])
+      }
+      setShowFeedbackModal(true)
     }
   }
 
@@ -313,6 +321,8 @@ const CVBuilder: React.FC = () => {
 
         pdf.save(fileName)
         toast.success(t('cv.errors.cvDownloaded'))
+        // Show feedback modal after successful download
+        setShowFeedbackModal(true)
       } finally {
         // Always clean up the offscreen wrapper
         document.body.removeChild(wrapper)
@@ -620,6 +630,8 @@ const CVBuilder: React.FC = () => {
       const fileName = `${sanitizeFileName(cvData.personalInfo.fullName || 'resume')}_CV.docx`
       saveAs(blob, fileName)
       toast.success(t('cv.errors.wordDownloaded'))
+      // Show feedback modal after successful download
+      setShowFeedbackModal(true)
     } catch (error: unknown) {
       console.error('Word generation error:', error)
       const errorMessage = error instanceof Error ? error.message : t('cv.errors.unknownError')
@@ -694,6 +706,7 @@ const CVBuilder: React.FC = () => {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       {/* Header with Logout */}
       <div className="bg-card border-b border-border sticky top-0 z-10">
@@ -762,11 +775,20 @@ const CVBuilder: React.FC = () => {
               <Button
                 size="sm"
                 onClick={handleNext}
-                disabled={currentStepIndex === cvSteps.length - 1}
                 className="ml-auto"
+                id={currentStepIndex === cvSteps.length - 1 ? 'cv-finish-btn' : 'cv-next-btn'}
               >
-                {t('common.next')}
-                <ChevronRight className="w-4 h-4 ml-2" />
+                {currentStepIndex === cvSteps.length - 1 ? (
+                  <>
+                    <CheckCheck className="w-4 h-4 mr-2" />
+                    Finish
+                  </>
+                ) : (
+                  <>
+                    {t('common.next')}
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </div>
 
@@ -810,6 +832,15 @@ const CVBuilder: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* Feedback Modal */}
+    {showFeedbackModal && (
+      <FeedbackModal
+        defaultName={cvData.personalInfo.fullName}
+        onClose={() => setShowFeedbackModal(false)}
+      />
+    )}
+    </>
   )
 }
 

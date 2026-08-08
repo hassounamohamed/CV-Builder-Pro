@@ -30,5 +30,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
     }
+
+    // Feedbacks / reviews collection
+    // Anyone can read feedbacks (shown publicly on landing page)
+    // Anyone can submit feedback
+    match /feedbacks/{feedbackId} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
   }
 }
